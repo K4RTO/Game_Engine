@@ -40,11 +40,6 @@
 - 允许在编辑器中实时调整游戏参数，无需重新编译
 - 体现了数据驱动的设计理念
 
-![LUT效果示例1](assets/lut效果%20(4).png)
-![LUT效果示例2](assets/lut效果%20(5).png)
-![角色碰撞示例](assets/collision.gif)
-![反射系统示例](assets/toolchain.gif)
-![角色动画示例](assets/Animation.gif)
 
 ## 技术栈
 
