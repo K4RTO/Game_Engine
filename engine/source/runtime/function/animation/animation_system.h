@@ -5,10 +5,13 @@
 #include "runtime/resource/res_type/data/blend_state.h"
 #include "runtime/resource/res_type/data/skeleton_data.h"
 #include "runtime/resource/res_type/data/skeleton_mask.h"
-
+#include "runtime/core/math/math_headers.h" 
+#include "runtime/function/animation/skeleton.h"
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
+#include "json11.hpp"
 
 namespace Piccolo
 {
@@ -27,7 +30,43 @@ namespace Piccolo
         static std::shared_ptr<BoneBlendMask> tryLoadSkeletonMask(std::string file_path);
         static BlendStateWithClipData         getBlendStateWithClipData(const BlendState& blend_state);
 
+        static void blendPoses(const AnimationPose& pose1, const AnimationPose& pose2, float blendFactor, AnimationPose& outPose);
+        static bool updateAnimationFSM(const std::map<std::string, bool>& signals);
+
         AnimationManager() = default;
     };
 
+    class AnimationFSM
+    {
+    public:
+        enum class States
+        {
+            _idle,
+            _walk_start,
+            _walk_run,
+            _walk_stop,
+            _jump_start_from_idle,
+            _jump_loop_from_idle,
+            _jump_end_from_idle,
+            _jump_start_from_walk_run,
+            _jump_loop_from_walk_run,
+            _jump_end_from_walk_run,
+            _count
+        };
+
+        static States updateState(const std::map<std::string, bool>& signals);
+        static std::string getCurrentClipBaseName();
+    };
+     class AnimationSystem
+    {
+    public:
+        void tick(float delta_time);
+        void playAnimation(const std::string& clip_name);
+        void updateAnimation(float delta_time);
+
+    private:
+        std::map<std::string, std::shared_ptr<AnimationClip>> m_animation_clips;
+        AnimationFSM::States m_current_state = AnimationFSM::States::_idle;
+        std::string m_current_clip_name = "idle_anim";
+    };
 } // namespace Piccolo

@@ -56,6 +56,10 @@ namespace Piccolo
         float m_vertical_move_speed {0.f};
         float m_jump_horizontal_speed_ratio {0.f};
 
+        bool m_can_double_jump {true};
+        float m_jump_cooldown_timer {0.f};
+        int m_jump_count {0};
+
         Vector3 m_desired_displacement;
         Vector3 m_desired_horizontal_move_direction;
         Vector3 m_jump_initial_velocity;

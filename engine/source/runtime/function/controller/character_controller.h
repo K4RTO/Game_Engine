@@ -33,5 +33,6 @@ namespace Piccolo
     private:
         Capsule        m_capsule;
         RigidBodyShape m_rigidbody_shape;
+        bool           m_is_touch_ground {false};
     };
 } // namespace Piccolo

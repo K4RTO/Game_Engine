@@ -1,113 +1,60 @@
-# Piccolo Engine (formerly Pilot Engine)
+# Piccolo游戏引擎核心功能开发项目
 
-<p align="center">
-  <a href="https://games104.boomingtech.com">
-    <img src="engine/source/editor/resource/PiccoloEngine.png" width="400" alt="Piccolo Engine logo">
-  </a>
-</p>
+## 项目概述
 
-**Piccolo Engine** is a tiny game engine used for the [GAMES104](https://games104.boomingtech.com) course.
+本项目是基于Game104课程的代码框架，实现并且研究包括动画系统、物理系统、渲染后处理和工具链等关键组件引擎代码。属于个人学习研究项目
 
-## Continuous build status
+## 已实现功能
 
-|    Build Type     |                                                                                      Status                                                                                      |
-| :---------------: | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| **Build Windows** | [![Build Windows](https://github.com/BoomingTech/Piccolo/actions/workflows/build_windows.yml/badge.svg)](https://github.com/BoomingTech/Piccolo/actions/workflows/build_windows.yml) |
-|  **Build Linux**  |    [![Build Linux](https://github.com/BoomingTech/Piccolo/actions/workflows/build_linux.yml/badge.svg)](https://github.com/BoomingTech/Piccolo/actions/workflows/build_linux.yml)    |
-|  **Build macOS**  |    [![Build macOS](https://github.com/BoomingTech/Piccolo/actions/workflows/build_macos.yml/badge.svg)](https://github.com/BoomingTech/Piccolo/actions/workflows/build_macos.yml)    |
+### 1. 动画状态机框架
 
-## Prerequisites
+- 实现了`AnimationFSM`类，为角色动画提供了完整的状态管理框架
+- 定义了多个动画状态，如空闲、走路开始、跳跃等
+- 实现了`update`函数，根据输入信号和当前状态决定下一个状态
+- 目前仅有跑步动画，但框架已为未来扩展多种动画状态做好准备
 
-To build Piccolo, you must first install the following tools.
+### 2. 高级角色控制器
 
-### Windows 10/11
-- Visual Studio 2019 (or more recent)
-- CMake 3.19 (or more recent)
-- Git 2.1 (or more recent)
+- 增强了`CharacterController`的功能，提升了角色与环境的交互真实感
+- 实现了复杂的碰撞检测和响应机制：
+  - 使用`sweep`进行精确碰撞检测
+  - 分离处理垂直和水平移动
+  - 实现了跳跃到平台、空中碰壁后落地等效果
+  - 添加了沿墙滑动机制
+- 增加了灵活的跳跃控制：
+  - 可调节的跳跃初始速度（`m_jump_initial_speed`）
+  - 支持二段跳（`m_enable_double_jump`）
+  - 实现了跳跃冷却时间（`m_jump_cooldown`）
 
-### macOS >= 10.15 (x86_64)
-- Xcode 12.3 (or more recent)
-- CMake 3.19 (or more recent)
-- Git 2.1 (or more recent)
+### 3. Color Grading后处理
 
-### Ubuntu 20.04
- - apt install the following packages
-```
-sudo apt install libxrandr-dev
-sudo apt install libxrender-dev
-sudo apt install libxinerama-dev
-sudo apt install libxcursor-dev
-sudo apt install libxi-dev
-sudo apt install libglvnd-dev
-sudo apt install libvulkan-dev
-sudo apt install cmake
-sudo apt install clang
-sudo apt install libc++-dev
-sudo apt install libglew-dev
-sudo apt install libglfw3-dev
-sudo apt install vulkan-validationlayers
-sudo apt install mesa-vulkan-drivers
-```
-- [NVIDIA driver](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#runfile) (The AMD and Intel driver is open-source, and thus is installed automatically by mesa-vulkan-drivers)
+- 在fragment shader中实现了基于3D Look-Up Table (LUT)的Color Grading系统
+- 使用`textureSize`动态获取LUT尺寸，适应不同分辨率的LUT
+- 实现了高效的3D到2D LUT映射算法
+- 精确的颜色空间变换和插值计算，确保平滑的色彩过渡
 
-## Build Piccolo
+### 4. 反射系统应用
 
-### Build on Windows
-You may execute the **build_windows.bat**. This batch file will generate the projects, and build the **Release** config of **Piccolo Engine** automatically. After successful build, you can find the PiccoloEditor.exe at the **bin** directory.
+- 利用引擎的反射系统为新增的组件属性添加反射支持
+- 使用`META(Enable)`等标记实现属性的自动反射
+- 允许在编辑器中实时调整游戏参数，无需重新编译
+- 体现了数据驱动的设计理念
 
-Or you can use the following command to generate the **Visual Studio** project firstly, then open the solution in the build directory and build it manually.
-```
-cmake -S . -B build
-```
+![LUT效果示例1](assets/lut效果%20(4).png)
+![LUT效果示例2](assets/lut效果%20(5).png)
+![角色碰撞示例](assets/collision.gif)
+![反射系统示例](assets/toolchain.gif)
+![角色动画示例](assets/Animation.gif)
 
-### Build on macOS
+## 技术栈
 
-> The following build instructions only tested on specific hardware of x86_64, and do not support M1 chips. For M1 compatible, we will release later.
+- 编程语言：C++
+- 图形API：Vulkan
+- 着色器语言：GLSL
 
-To compile Piccolo, you must have the most recent version of Xcode installed.
-Then run 'cmake' from the project's root directory, to generate a project of Xcode.
+## 未来计划
 
-```
-cmake -S . -B build -G "Xcode"
-```
-and you can build the project with
-```
-cmake --build build --config Release
-```
-
-Or you can execute the **build_macos.sh** to build the binaries.
-
-### Build on Ubuntu 20.04
-You can execute the **build_linux.sh** to build the binaries.
-
-## Documentation
-For documentation, please refer to the Wiki section.
-
-## Extra
-
-### Vulkan Validation Layer: Validation Error
-We have noticed some developers on Windows encounted PiccoloEditor.exe could run normally but reported an exception Vulkan Validation Layer: Validation Error
-when debugging. You can solve this problem by installing Vulkan SDK (official newest version will do).
-
-### Generate Compilation Database
-
-You can build `compile_commands.json` with the following commands when `Unix Makefiles` generaters are avaliable. `compile_commands.json` is the file
-required by `clangd` language server, which is a backend for cpp lsp-mode in Emacs.
-
-For Windows:
-
-``` powershell
-cmake -DCMAKE_TRY_COMPILE_TARGET_TYPE="STATIC_LIBRARY" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -S . -B compile_db_temp -G "Unix Makefiles"
-copy compile_db_temp\compile_commands.json .
-```
-
-### Using Physics Debug Renderer
-Currently Physics Debug Renderer is only available on Windows. You can use the following command to generate the solution with the debugger project.
-
-``` powershell
-cmake -S . -B build -DENABLE_PHYSICS_DEBUG_RENDERER=ON
-```
-
-Note:
-1. Please clean the build directory before regenerating the solution. We've encountered building problems in regenerating directly with previous CMakeCache.
-2. Physics Debug Renderer will run when you start PiccoloEditor. We've synced the camera position between both scenes. But the initial camera mode in Physics Debug Renderer is wrong. Scrolling down the mouse wheel once will change the camera of Physics Debug Renderer to the correct mode.
+- [ ] 扩展动画状态机，实现更多动画状态和平滑过渡
+- [ ] 优化物理系统，增加更多环境交互功能
+- [ ] 添加更多后处理效果
+- [ ] 继续完善工具链，提升开发效率

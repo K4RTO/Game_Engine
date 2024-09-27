@@ -6,6 +6,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(BUILD_SHARED_LIBS OFF)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX-")
+
+add_compile_options(/wd4514)
+add_compile_options(/wd5266 /wd5267)
+
+include_directories("D:/VS project/Game Engine/engine/3rdparty")
+
+
 include(CMakeDependentOption)
 
 # ---- Include guards ----

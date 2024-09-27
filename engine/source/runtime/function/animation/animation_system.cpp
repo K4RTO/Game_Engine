@@ -1,9 +1,10 @@
 #include "runtime/function/animation/animation_system.h"
-
-#include "resource/res_type/data/skeleton_mask.h"
+#include "runtime/core/math/vector3.h"
+#include "runtime/core/math/quaternion.h"
 
 #include "runtime/function/animation/animation_loader.h"
 #include "runtime/function/animation/skeleton.h"
+#include "runtime/function/animation/utilities.h"
 
 namespace Piccolo
 {
@@ -82,7 +83,6 @@ namespace Piccolo
 
     BlendStateWithClipData AnimationManager::getBlendStateWithClipData(const BlendState& blend_state)
     {
-
         for (auto animation_file_path : blend_state.blend_clip_file_path)
         {
             tryLoadAnimation(animation_file_path);
@@ -137,7 +137,6 @@ namespace Piccolo
             {
                 if (blend_masks[clip_index]->enabled[bone_index])
                 {
-
                     blend_state_with_clip_data.blend_weight[clip_index].blend_weight[bone_index] =
                         blend_state.blend_weight[clip_index] / sum_weight;
                 }
@@ -149,4 +148,97 @@ namespace Piccolo
         }
         return blend_state_with_clip_data;
     }
+
+    void AnimationManager::blendPoses(const AnimationPose& pose1, const AnimationPose& pose2, float blendFactor, AnimationPose& outPose)
+    {
+        outPose.m_bone_poses.resize(pose1.m_bone_poses.size());
+        outPose.m_weight.blend_weight.resize(pose1.m_weight.blend_weight.size());
+
+        for (size_t i = 0; i < pose1.m_bone_poses.size(); ++i)
+        {
+            const auto& trans1 = pose1.m_bone_poses[i];
+            const auto& trans2 = pose2.m_bone_poses[i];
+
+            outPose.m_bone_poses[i].m_position = Vector3::lerp(trans1.m_position, trans2.m_position, blendFactor);
+            outPose.m_bone_poses[i].m_scale = Vector3::lerp(trans1.m_scale, trans2.m_scale, blendFactor);
+            outPose.m_bone_poses[i].m_rotation = Quaternion::sLerp(blendFactor, trans1.m_rotation, trans2.m_rotation, true);
+
+            outPose.m_weight.blend_weight[i] = (1 - blendFactor) * pose1.m_weight.blend_weight[i] + blendFactor * pose2.m_weight.blend_weight[i];
+        }
+    }
+
+    bool AnimationManager::updateAnimationFSM(const std::map<std::string, bool>& signals)
+    {
+        static AnimationFSM::States currentState = AnimationFSM::States::_idle;
+        AnimationFSM::States newState = AnimationFSM::updateState(signals);
+
+        if (newState != currentState)
+        {
+            currentState = newState;
+            return true;
+        }
+        return false;
+    }
+
+    AnimationFSM::States AnimationFSM::updateState(const std::map<std::string, bool>& signals)
+    {
+        static States m_state = States::_idle;
+        States last_state = m_state;
+        bool is_clip_finish = tryGetBool(signals, "clip_finish", false);
+        bool is_jumping = tryGetBool(signals, "jumping", false);
+        float speed = tryGetFloat(signals, "speed", 0.0f);
+        bool is_moving = speed > 0.01f;
+
+        switch (m_state)
+        {
+        case States::_idle:
+            if (is_jumping)
+                m_state = States::_jump_start_from_idle;
+            else if (is_moving)
+                m_state = States::_walk_start;
+            break;
+        case States::_walk_start:
+            if (is_clip_finish)
+                m_state = States::_walk_run;
+            break;
+        case States::_walk_run:
+            if (is_jumping)
+                m_state = States::_jump_start_from_walk_run;
+            else if (!is_moving)
+                m_state = States::_walk_stop;
+            break;
+        case States::_walk_stop:
+            if (is_clip_finish)
+                m_state = States::_idle;
+            break;
+        case States::_jump_start_from_idle:
+        case States::_jump_start_from_walk_run:
+            if (is_clip_finish)
+                m_state = is_jumping ? (m_state == States::_jump_start_from_idle ? States::_jump_loop_from_idle : States::_jump_loop_from_walk_run) : States::_idle;
+            break;
+        case States::_jump_loop_from_idle:
+        case States::_jump_loop_from_walk_run:
+            if (!is_jumping)
+                m_state = m_state == States::_jump_loop_from_idle ? States::_jump_end_from_idle : States::_jump_end_from_walk_run;
+            break;
+        case States::_jump_end_from_idle:
+        case States::_jump_end_from_walk_run:
+            if (is_clip_finish)
+                m_state = is_moving ? States::_walk_run : States::_idle;
+            break;
+        }
+
+        return m_state;
+    }
+
+    std::string AnimationFSM::getCurrentClipBaseName()
+    {
+        // Implementation of getCurrentClipBaseName
+        // This function should return the base name of the current animation clip
+        // based on the current state of the FSM.
+        // For now, I'll leave it as a placeholder. You may need to implement this
+        // based on your specific requirements.
+        return "placeholder_clip_name";
+    }
+
 } // namespace Piccolo

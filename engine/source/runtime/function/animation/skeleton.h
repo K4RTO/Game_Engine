@@ -1,13 +1,21 @@
 #pragma once
 
 #include "runtime/resource/res_type/components/animation.h"
-
 #include "runtime/function/animation/node.h"
 
 namespace Piccolo
 {
     class SkeletonData;
     class BlendStateWithClipData;
+
+    class AnimationPose
+    {
+    public:
+        std::vector<Transform> m_bone_poses;
+        BoneBlendWeight m_weight;
+
+        void blend(const AnimationPose& other);
+    };
 
     class Skeleton
     {

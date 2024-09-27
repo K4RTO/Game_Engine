@@ -49,6 +49,19 @@ namespace Piccolo
         float m_move_acceleration {0.f};
         float m_sprint_acceleration { 0.f};
 
+
+        META(Enable)
+        float m_jump_initial_speed {0.f};
+
+        META(Enable)
+        bool m_enable_double_jump {false};
+
+        META(Enable)
+        float m_jump_cooldown {0.5f};
+
+        META(Enable)
+        float m_air_control {0.3f};
+
         Reflection::ReflectionPtr<ControllerConfig> m_controller_config;
     };
 } // namespace Piccolo

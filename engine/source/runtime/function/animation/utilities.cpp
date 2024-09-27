@@ -51,4 +51,16 @@ namespace Piccolo
             return it->index;
         return std::numeric_limits<int>::max();
     }
+
+    bool Piccolo::tryGetBool(const std::map<std::string, bool>& map, const std::string& key, bool defaultValue)
+    {
+        auto it = map.find(key);
+        return it != map.end() ? it->second : defaultValue;
+    }
+
+    float Piccolo::tryGetFloat(const std::map<std::string, bool>& map, const std::string& key, float defaultValue)
+    {
+        auto it = map.find(key);
+        return it != map.end() ? (it->second ? 1.0f : 0.0f) : defaultValue;
+    }
 } // namespace Piccolo

@@ -123,18 +123,25 @@ namespace Piccolo
             g_runtime_global_context.m_world_manager->getCurrentActivePhysicsScene().lock();
         ASSERT(physics_scene);
 
-        if (m_motor_res.m_jump_height == 0.f)
-            return;
-
         const float gravity = physics_scene->getGravity().length();
+
+        if (m_jump_cooldown_timer > 0)
+        {
+            m_jump_cooldown_timer -= delta_time;
+        }
 
         if (m_jump_state == JumpState::idle)
         {
-            if ((unsigned int)GameCommand::jump & command)
+            if ((unsigned int)GameCommand::jump & command && m_jump_cooldown_timer <= 0)
             {
-                m_jump_state                  = JumpState::rising;
-                m_vertical_move_speed         = Math::sqrt(m_motor_res.m_jump_height * 2 * gravity);
+                m_jump_state = JumpState::rising;
+                m_vertical_move_speed = m_motor_res.m_jump_initial_speed > 0.f ? 
+                    m_motor_res.m_jump_initial_speed : 
+                    Math::sqrt(m_motor_res.m_jump_height * 2 * gravity);
                 m_jump_horizontal_speed_ratio = m_move_speed_ratio;
+                m_jump_cooldown_timer = m_motor_res.m_jump_cooldown;
+                m_jump_count = 1;
+                m_can_double_jump = m_motor_res.m_enable_double_jump;
             }
             else
             {
@@ -143,7 +150,18 @@ namespace Piccolo
         }
         else if (m_jump_state == JumpState::rising || m_jump_state == JumpState::falling)
         {
+            if (m_can_double_jump && (unsigned int)GameCommand::jump & command && m_jump_cooldown_timer <= 0)
+            {
+                m_vertical_move_speed = m_motor_res.m_jump_initial_speed > 0.f ? 
+                    m_motor_res.m_jump_initial_speed * 0.8f : 
+                    Math::sqrt(m_motor_res.m_jump_height * 2 * gravity) * 0.8f;
+                m_jump_cooldown_timer = m_motor_res.m_jump_cooldown;
+                m_can_double_jump = false;
+                m_jump_count++;
+            }
+
             m_vertical_move_speed -= gravity * delta_time;
+
             if (m_vertical_move_speed <= 0.f)
             {
                 m_jump_state = JumpState::falling;

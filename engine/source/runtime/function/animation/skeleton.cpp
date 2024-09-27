@@ -1,7 +1,5 @@
 #include "runtime/function/animation/skeleton.h"
-
 #include "runtime/core/math/math.h"
-
 #include "runtime/function/animation/utilities.h"
 
 namespace Piccolo
@@ -53,15 +51,13 @@ namespace Piccolo
             int   current_frame_low  = floor(exact_frame);
             int   current_frame_high = ceil(exact_frame);
             float lerp_ratio         = exact_frame - current_frame_low;
-            // for (size_t node_index = 0; node_index < 0; node_index++)
             for (size_t node_index = 0;
                  node_index < animation_clip.node_count && node_index < anim_skel_map.convert.size();
                  node_index++)
             {
                 AnimationChannel channel    = animation_clip.node_channels[node_index];
                 size_t           bone_index = anim_skel_map.convert[node_index];
-                float            weight     = 1; // blend_state.blend_weight[clip_index]->blend_weight[bone_index];
-                weight                      = 1;
+                float            weight     = 1;
                 if (fabs(weight) < 0.0001f)
                 {
                     continue;
@@ -98,22 +94,13 @@ namespace Piccolo
                     bone->rotate(rotation);
                     bone->scale(scaling);
                     bone->translate(position);
-
-                    // bone->rotate({ {},0.01,0,0,1 });
-                    // bone->scale({ {},0.9,0.9,0.9 });
                 }
             }
         }
-        // bones[77].rotate(Quaternion{ {},1,0,0,1 });
-        // bones[18].translate(Vector3{ {},0,1,0 });
-        // bones[0].setScale(Vector3{ {},0,1,0.01 });
         for (size_t i = 0; i < m_bone_count; i++)
         {
             m_bones[i].update();
         }
-#ifdef _DEBUG
-        // bones[107].m_derived_position += Vector3{ {},10, 0, 0 };
-#endif
     }
 
     AnimationResult Skeleton::outputAnimationResult()
@@ -127,21 +114,10 @@ namespace Piccolo
             animation_result_element->index = bone->getID() + 1;
             Vector3 temp_translation        = bone->_getDerivedPosition();
 
-            // TODO: the unit of the joint matrices is wrong
             Vector3 temp_scale = bone->_getDerivedScale();
 
             Quaternion temp_rotation = bone->_getDerivedOrientation();
 
-            // auto scale = bone->_getDerivedTScale();
-            // scale.x = 1.f / scale.x;
-            // scale.y = 1.f / scale.y;
-            // scale.z = 1.f / scale.z;
-
-            // auto revTmat = getMatrix(
-            //	-bone->_getDerivedTPosition(),
-            //	scale,
-            //	conjugate( bone->_getDerivedTOrientation())
-            //);
             auto objMat =
                 Transform(bone->_getDerivedPosition(), bone->_getDerivedOrientation(), bone->_getDerivedScale())
                     .getMatrix();
@@ -163,5 +139,25 @@ namespace Piccolo
     int32_t Skeleton::getBonesCount() const
     {
         return m_bone_count;
+    }
+
+    void AnimationPose::blend(const AnimationPose& other)
+    {
+        for (size_t i = 0; i < m_bone_poses.size(); i++)
+        {
+            auto& bone_trans_one = m_bone_poses[i];
+            const auto& bone_trans_two = other.m_bone_poses[i];
+            
+            float sum_weight = m_weight.blend_weight[i] + other.m_weight.blend_weight[i];
+            if (sum_weight > 0.0001f)
+            {
+                float cur_weight = m_weight.blend_weight[i] / sum_weight;
+                m_weight.blend_weight[i] = sum_weight;
+                
+                bone_trans_one.m_position = Vector3::lerp(bone_trans_one.m_position, bone_trans_two.m_position, cur_weight);
+                bone_trans_one.m_scale = Vector3::lerp(bone_trans_one.m_scale, bone_trans_two.m_scale, cur_weight);
+                bone_trans_one.m_rotation = Quaternion::nLerp(cur_weight, bone_trans_one.m_rotation, bone_trans_two.m_rotation, true);
+            }
+        }
     }
 } // namespace Piccolo

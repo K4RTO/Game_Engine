@@ -34,7 +34,7 @@ namespace Piccolo
 
         Reflection::TypeMetaRegister::metaUnregister();
     }
-
+ 
     void PiccoloEngine::initialize() {}
     void PiccoloEngine::clear() {}
 
